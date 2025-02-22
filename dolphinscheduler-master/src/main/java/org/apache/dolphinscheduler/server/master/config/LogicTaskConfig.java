@@ -22,12 +22,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 逻辑任务执行线程配置类，用于管理任务执行线程池相关配置
+ *
+ * <p>采用构建器模式设计，支持链式调用配置参数</p>
+ */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class LogicTaskConfig {
 
+    /**
+     * 任务执行线程池大小（默认值：CPU核心数*2+1）
+     * <p>该配置用于控制同时执行的任务处理线程数量，默认采用与CPU核数相关的弹性配置策略</p>
+     */
     @Builder.Default
     private int taskExecutorThreadCount = Runtime.getRuntime().availableProcessors() * 2 + 1;
 }

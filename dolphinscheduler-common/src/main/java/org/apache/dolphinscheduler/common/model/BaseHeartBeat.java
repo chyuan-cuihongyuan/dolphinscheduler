@@ -24,23 +24,37 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * 基础心跳
+ */
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class BaseHeartBeat implements HeartBeat {
 
+    // 进程id
     protected int processId;
+    // 服务启动时间
     protected long startupTime;
+    // 上报时间
     protected long reportTime;
+    // jvm cpu使用率
     protected double jvmCpuUsage;
+    // 系统cpu使用率
     protected double cpuUsage;
+    // jvm内存使用率
     protected double jvmMemoryUsage;
+    // 系统内存使用率
     protected double memoryUsage;
+    // 磁盘使用率
     protected double diskUsage;
+    // 服务状态
     protected ServerStatus serverStatus;
 
+    // 服务地址
     protected String host;
+    // 服务端口
     protected int port;
 
 }

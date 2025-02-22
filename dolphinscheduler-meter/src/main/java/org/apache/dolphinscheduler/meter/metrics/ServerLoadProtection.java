@@ -17,8 +17,17 @@
 
 package org.apache.dolphinscheduler.meter.metrics;
 
+/**
+ * 服务端负载保护检测接口，用于判断系统当前是否处于高负载状态
+ * <p>实现该接口的类需定义具体的负载评估算法（如基于CPU/内存使用率等系统指标）</p>
+ */
 public interface ServerLoadProtection {
 
+    /**
+     * 检测系统负载是否超过安全阈值
+     * @param systemMetrics 系统指标数据（包含CPU、内存等运行时指标）
+     * @return true表示系统过载需要触发保护机制，false表示系统负载正常
+     */
     boolean isOverload(SystemMetrics systemMetrics);
 
 }

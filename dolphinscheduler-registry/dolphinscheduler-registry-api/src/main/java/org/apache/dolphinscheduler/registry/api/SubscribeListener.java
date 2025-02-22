@@ -17,23 +17,42 @@
 
 package org.apache.dolphinscheduler.registry.api;
 
+/**
+ * 订阅监听器
+ */
 public interface SubscribeListener {
 
+    /**
+     * 通知
+     *
+     * @param event 活动
+     */
     void notify(final Event event);
 
+    /**
+     * 获取订阅范围
+     *
+     * @return 订阅范围
+     */
     SubscribeScope getSubscribeScope();
 
+    /**
+     * 订阅范围
+     */
     enum SubscribeScope {
         /**
          * Only watch the path itself
+         * 只通过路径进行观察
          */
         PATH_ONLY,
         /**
          * Only watch the children of the path
+         * 只通过子路径进行观察
          */
         CHILDREN_ONLY,
         /**
-         * Watch the path and all its children and the parent path
+         * Watch the path and all its children and the parent
+         * 观察路径及其所有子路径和父路径
          */
         ALL
 

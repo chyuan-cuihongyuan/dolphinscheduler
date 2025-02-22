@@ -19,8 +19,15 @@ package org.apache.dolphinscheduler.common.model;
 
 import org.apache.dolphinscheduler.common.enums.ServerStatus;
 
+/**
+ * 心跳
+ */
 public interface HeartBeat {
 
+    /**
+     * 获取服务器状态
+     * @return 服务器状态
+     */
     ServerStatus getServerStatus();
 
 }

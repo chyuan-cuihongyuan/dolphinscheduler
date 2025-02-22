@@ -25,17 +25,24 @@ import lombok.NonNull;
 
 /**
  * The worker load balancer used to select a worker from the {@link WorkerClusters} by load balancer algorithm.
+ * 工作负载平衡器用于通过负载平衡器算法从 {@link WorkerClusters} 中选择工作负载。
  */
 public interface IWorkerLoadBalancer {
 
     /**
      * Select a worker address under the given worker group.
+     * 在给定的工作组下选择一个工作地址。
      *
-     * @param workerGroup worker group cannot be null.
-     * @return the selected worker address, or empty if no worker is available.
+     * @param workerGroup worker group cannot be null. 工作组不能为空。
+     * @return the selected worker address, or empty if no worker is available. 所选的工作服务地址，如果没有工作服务可用，则为空。
      */
     Optional<String> select(@NonNull String workerGroup);
 
+    /**
+     * 获取工作负载平衡器类型
+     *
+     * @return 工作负载平衡器类型
+     */
     WorkerLoadBalancerType getType();
 
 }

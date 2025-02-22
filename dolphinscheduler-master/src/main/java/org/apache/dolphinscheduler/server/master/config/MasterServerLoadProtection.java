@@ -21,7 +21,13 @@ import org.apache.dolphinscheduler.meter.metrics.BaseServerLoadProtection;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Master 服务负载保护配置
+ * <p>继承基础负载保护能力，用于管理 Master 服务的系统资源保护策略
+ *
+ * <p>当前版本直接复用基类实现，保留扩展能力用于未来可能的 Master 定制化保护策略
+ */
 @Slf4j
 public class MasterServerLoadProtection extends BaseServerLoadProtection {
-
+    // 保留空类结构用于后续扩展
 }

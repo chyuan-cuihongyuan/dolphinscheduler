@@ -21,41 +21,65 @@ import lombok.Data;
 
 import org.springframework.validation.Errors;
 
+/**
+ * 命令获取策略配置
+ * <p>包含策略类型和具体策略配置，用于控制Master节点从数据库获取任务的策略
+ */
 @Data
 public class CommandFetchStrategy {
 
+    /** 策略类型（默认基于ID槽位） */
     private CommandFetchStrategyType type = CommandFetchStrategyType.ID_SLOT_BASED;
-
+    /** 策略具体配置参数 */
     private CommandFetchConfig config = new IdSlotBasedFetchConfig();
 
+    /**
+     * 配置参数校验
+     * @param errors Spring验证错误收集对象
+     */
     public void validate(Errors errors) {
         config.validate(errors);
     }
-
+    /**
+     * 命令获取策略类型枚举
+     */
     public enum CommandFetchStrategyType {
-        ID_SLOT_BASED,
-        ;
+        /** 基于ID槽位的分页获取策略 */
+        ID_SLOT_BASED
     }
 
+    /**
+     * 策略配置接口
+     */
     public interface CommandFetchConfig {
 
         void validate(Errors errors);
 
     }
 
+    /**
+     * ID槽位获取策略配置
+     */
     @Data
     public static class IdSlotBasedFetchConfig implements CommandFetchConfig {
 
+        /** ID增长步长（默认1） */
         private int idStep = 1;
+        /** 单次获取命令数量（默认10条） */
         private int fetchSize = 10;
 
+        /**
+         * 参数校验规则：
+         * 1. idStep必须大于0
+         * 2. fetchSize必须大于0
+         */
         @Override
         public void validate(Errors errors) {
             if (idStep <= 0) {
-                errors.rejectValue("step", null, "step must be greater than 0");
+                errors.rejectValue("step", null, "step must be greater than 0（步长必须大于0）");
             }
             if (fetchSize <= 0) {
-                errors.rejectValue("fetchSize", null, "fetchSize must be greater than 0");
+                errors.rejectValue("fetchSize", null, "fetchSize must be greater than 0（fetchSize必须大于0）");
             }
         }
     }

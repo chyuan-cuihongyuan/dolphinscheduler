@@ -17,9 +17,14 @@
 
 package org.apache.dolphinscheduler.common.enums;
 
+/**
+ * 服务器状态
+ */
 public enum ServerStatus {
 
+    // 正常
     NORMAL,
+    // 繁忙
     BUSY,
 
 }

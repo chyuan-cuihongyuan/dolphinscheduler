@@ -22,6 +22,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
+/**
+ * 事件
+ */
 @Getter
 @ToString
 @Builder
@@ -29,18 +32,25 @@ import lombok.ToString;
 public class Event {
 
     // The path which is watched
+    // 被监视的路径
     private final String watchedPath;
     // The full path where the event was generated
+    // 事件生成的完整路径
     private final String eventPath;
     // The value corresponding to the path
+    // 与路径对应的值
     private final String eventData;
     // The event type {ADD, REMOVE, UPDATE}
+    // 事件类型｛ADD、REMOVE、UPDATE｝
     private Type type;
 
+    /**
+     * 事件类型
+     */
     public enum Type {
-        ADD,
-        REMOVE,
-        UPDATE
+        ADD, // 添加
+        REMOVE, // 移除
+        UPDATE // 更新
     }
 
 }

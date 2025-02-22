@@ -25,20 +25,31 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * 工作服务器元数据
+ */
 @Data
-@SuperBuilder
+@SuperBuilder // 可以调用WorkerServerMetadata.builder()进行构造器
 @EqualsAndHashCode(callSuper = true)
 public class WorkerServerMetadata extends BaseServerMetadata {
 
-    @Builder.Default
+    // 工作组
+    @Builder.Default // 调用WorkerServerMetadata.builder()时的默认值
     private final String workerGroup = "default";
 
     // Only used in FixedWeightedRoundRobinWorkerLoadBalancer
+    // 工作权重 仅用于FixedWeightedRoundRobinWorkerLoadBalancer
     @Builder.Default
     private final double workerWeight = 1;
 
+    // 任务线程池使用率
     private final double taskThreadPoolUsage;
 
+    /**
+     * 从心跳中解析工作服务器元数据
+     * @param workerHeartBeat 工作主机心跳
+     * @return 工作服务器元数据
+     */
     public static WorkerServerMetadata parseFromHeartBeat(final WorkerHeartBeat workerHeartBeat) {
         return WorkerServerMetadata.builder()
                 .processId(workerHeartBeat.getProcessId())

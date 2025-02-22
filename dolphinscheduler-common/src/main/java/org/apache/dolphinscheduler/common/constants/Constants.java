@@ -27,11 +27,23 @@ public final class Constants {
 
     /**
      * common properties path
+     * 通用属性路径
      */
     public static final String COMMON_PROPERTIES_PATH = "/common.properties";
 
+    /**
+     * 远程日志YAML路径
+     */
     public static final String REMOTE_LOGGING_YAML_PATH = "/remote-logging.yaml";
+
+    /**
+     * AWS-YAML路径
+     */
     public static final String AWS_YAML_PATH = "/aws.yaml";
+
+    /**
+     * 资源中心YAML路径
+     */
     public static final String RESOURCE_CENTER_YAML_PATH = "/resource-center.yaml";
 
     public static final String FORMAT_S_S = "%s/%s";

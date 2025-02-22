@@ -17,9 +17,12 @@
 
 package org.apache.dolphinscheduler.server.master.cluster.loadbalancer;
 
+/**
+ * 工作负载均衡类型
+ */
 public enum WorkerLoadBalancerType {
-    RANDOM,
-    ROUND_ROBIN,
-    FIXED_WEIGHTED_ROUND_ROBIN,
-    DYNAMIC_WEIGHTED_ROUND_ROBIN,
+    RANDOM, // 随机
+    ROUND_ROBIN, // 轮询
+    FIXED_WEIGHTED_ROUND_ROBIN, // 固定加权轮询
+    DYNAMIC_WEIGHTED_ROUND_ROBIN, // 动态加权轮询
 }

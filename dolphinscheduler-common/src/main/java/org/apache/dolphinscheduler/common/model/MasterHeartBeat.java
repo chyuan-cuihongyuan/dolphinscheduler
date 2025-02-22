@@ -20,10 +20,14 @@ package org.apache.dolphinscheduler.common.model;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * 主心跳
+ */
 @SuperBuilder
 @NoArgsConstructor
 public class MasterHeartBeat extends BaseHeartBeat implements HeartBeat {
 
+    // 协调员
     private boolean isCoordinator;
 
 }

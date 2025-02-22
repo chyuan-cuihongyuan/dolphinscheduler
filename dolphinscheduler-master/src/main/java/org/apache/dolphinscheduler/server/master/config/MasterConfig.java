@@ -34,6 +34,18 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.validation.annotation.Validated;
 
+/**
+ * Master服务器配置类，用于加载以'master'为前缀的配置项，并实现配置参数的校验逻辑。
+ * <p>包含以下核心配置项：</p>
+ * <ul>
+ *   <li>RPC服务监听端口配置</li>
+ *   <li>工作流事件总线线程池配置</li>
+ *   <li>心跳检测间隔配置</li>
+ *   <li>Worker组刷新策略配置</li>
+ *   <li>服务负载保护机制配置</li>
+ *   <li>Worker负载均衡策略配置</li>
+ * </ul>
+ */
 @Data
 @Validated
 @Configuration
@@ -42,43 +54,83 @@ import org.springframework.validation.annotation.Validated;
 public class MasterConfig implements Validator {
 
     /**
-     * The master RPC server listen port.
+     * The master RPC server listen port. 主RPC服务器侦听端口。
+     * RPC服务监听端口（默认：5678）
      */
     private int listenPort = 5678;
 
+    /**
+     * 工作流事件总线处理线程数（默认值：CPU核心数*2+1）
+     */
     private int workflowEventBusFireThreadCount = Runtime.getRuntime().availableProcessors() * 2 + 1;
 
+    /**
+     * 逻辑任务执行配置（包含任务提交/执行相关参数）
+     */
     private LogicTaskConfig logicTaskConfig = new LogicTaskConfig();
 
     /**
-     * Master heart beat task execute interval.
+     * Master heart beat task execute interval. 掌握心跳任务执行间隔。
+     * 最大心跳检测间隔（默认：10秒）
      */
     private Duration maxHeartbeatInterval = Duration.ofSeconds(10);
 
+    /**
+     * 服务端负载保护配置（包含CPU/内存阈值等保护机制）
+     */
     private MasterServerLoadProtection serverLoadProtection = new MasterServerLoadProtection();
 
+    /**
+     * Worker组信息刷新间隔（默认：5分钟）
+     */
     private Duration workerGroupRefreshInterval = Duration.ofMinutes(5);
 
+    /**
+     * 命令抓取策略配置（控制命令获取频率和批量大小）
+     */
     private CommandFetchStrategy commandFetchStrategy = new CommandFetchStrategy();
 
+    /**
+     * Worker负载均衡器配置（包含负载计算算法和权重参数）
+     */
     private WorkerLoadBalancerConfigurationProperties workerLoadBalancerConfigurationProperties =
             new WorkerLoadBalancerConfigurationProperties();
 
     /**
      * The IP address and listening port of the master server in the format 'ip:listenPort'.
+     * 主服务器的IP地址和侦听端口，格式为“IP:listenPort”。
+     * Master服务地址
      */
     private String masterAddress;
 
     /**
      * The registry path for the master server in the format '/nodes/master/ip:listenPort'.
+     * 主服务器的注册表路径，格式为“nodesmasterip:listenPort”。
+     * 注册中心路径
      */
     private String masterRegistryPath;
 
+    /**
+     * 配置校验入口方法，执行以下校验逻辑：
+     * <ul>
+     *   <li>监听端口有效性检查</li>
+     *   <li>事件总线线程数正数校验</li>
+     *   <li>心跳间隔有效性检查</li>
+     *   <li>Worker组刷新间隔下限检查（>=10秒）</li>
+     *   <li>自动生成Master地址（当未配置时）</li>
+     *   <li>校验命令抓取策略参数</li>
+     *   <li>校验负载均衡器参数</li>
+     * </ul>
+     */
     @Override
     public boolean supports(Class<?> clazz) {
         return MasterConfig.class.isAssignableFrom(clazz);
     }
 
+    /**
+     * 打印完整配置信息到日志（DEBUG级别）
+     * <p>输出格式包含星号分隔的配置块，包含所有关键配置参数</p>
+     */
     @Override
     public void validate(Object target, Errors errors) {
         MasterConfig masterConfig = (MasterConfig) target;

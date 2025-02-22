@@ -33,29 +33,56 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 主集群
+ */
 @Slf4j
 public class MasterClusters extends AbstractClusterSubscribeListener<MasterServerMetadata>
         implements
             IClusters<MasterServerMetadata> {
 
     /**
-     * Master address -> MasterServer
+     * Master address -> MasterServer 主地址->主服务器
      **/
     private final Map<String, MasterServerMetadata> masterServerMap = new ConcurrentHashMap<>();
 
+    /**
+     * 主集群更改侦听器
+     * <p>
+     * CopyOnWriteArrayList 是 Java 并发包中线程安全的 List 实现类，适用于读多写少的并发场景
+     * 监听器列表（如事件监听器）：高频遍历，低频修改。
+     * 缓存：读远多于写，容忍短暂数据不一致。
+     * 配置信息存储：配置变更少，读取频繁。
+     */
     private final List<IClustersChangeListener<MasterServerMetadata>> masterClusterChangeListeners =
             new CopyOnWriteArrayList<>();
 
+    /**
+     * 获取所有主服务器
+     *
+     * @return 主服务器列表
+     */
     @Override
     public List<MasterServerMetadata> getServers() {
         return UnmodifiableList.unmodifiableList(new ArrayList<>(masterServerMap.values()));
     }
 
+    /**
+     * 根据主服务器地址获取主服务器
+     *
+     * @param address 主服务器地址
+     * @return 主服务器
+     */
     @Override
     public Optional<MasterServerMetadata> getServer(final String address) {
         return Optional.ofNullable(masterServerMap.get(address));
     }
 
+    /**
+     * 获取所有正常主服务器
+     *
+     * @return 正常主服务器列表
+     */
     public List<MasterServerMetadata> getNormalServers() {
         List<MasterServerMetadata> normalMasterServers = masterServerMap.values()
                 .stream()
@@ -64,11 +91,22 @@ public class MasterClusters extends AbstractClusterSubscribeListener<MasterServe
         return UnmodifiableList.unmodifiableList(normalMasterServers);
     }
 
+    /**
+     * 注册监听器
+     *
+     * @param listener 监听器
+     */
     @Override
     public void registerListener(final IClustersChangeListener<MasterServerMetadata> listener) {
         masterClusterChangeListeners.add(listener);
     }
 
+    /**
+     * 解析服务器心跳
+     *
+     * @param masterHeartBeatJson 服务器心跳json
+     * @return 主服务器元数据
+     */
     @Override
     MasterServerMetadata parseServerFromHeartbeat(final String masterHeartBeatJson) {
         MasterHeartBeat masterHeartBeat = JSONUtils.parseObject(masterHeartBeatJson, MasterHeartBeat.class);
@@ -78,6 +116,11 @@ public class MasterClusters extends AbstractClusterSubscribeListener<MasterServe
         return MasterServerMetadata.parseFromHeartBeat(masterHeartBeat);
     }
 
+    /**
+     * 服务器添加
+     *
+     * @param masterServer 服务器心跳
+     */
     @Override
     public void onServerAdded(final MasterServerMetadata masterServer) {
         masterServerMap.put(masterServer.getAddress(), masterServer);
@@ -86,6 +129,11 @@ public class MasterClusters extends AbstractClusterSubscribeListener<MasterServe
         }
     }
 
+    /**
+     * 服务器移除
+     *
+     * @param masterServer 服务器心跳
+     */
     @Override
     public void onServerRemove(final MasterServerMetadata masterServer) {
         masterServerMap.remove(masterServer.getAddress());
@@ -94,6 +142,11 @@ public class MasterClusters extends AbstractClusterSubscribeListener<MasterServe
         }
     }
 
+    /**
+     * 服务器更新
+     *
+     * @param masterServer 服务器心跳
+     */
     @Override
     public void onServerUpdate(final MasterServerMetadata masterServer) {
         masterServerMap.put(masterServer.getAddress(), masterServer);

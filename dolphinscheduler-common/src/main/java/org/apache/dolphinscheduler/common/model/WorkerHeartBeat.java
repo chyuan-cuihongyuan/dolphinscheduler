@@ -22,13 +22,19 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * 从心跳（工作主机心跳）
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
 public class WorkerHeartBeat extends BaseHeartBeat implements HeartBeat {
 
+    // 工作主机权重
     private int workerHostWeight; // worker host weight
+    // 线程池使用情况（工人等待任务的数量）
     private double threadPoolUsage; // worker waiting task count
+    // 工作组
     private String workerGroup;
 }

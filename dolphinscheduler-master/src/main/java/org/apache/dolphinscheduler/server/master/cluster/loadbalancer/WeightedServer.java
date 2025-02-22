@@ -24,22 +24,30 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 加权服务器
+ *
+ * @param <T> 服务器
+ */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class WeightedServer<T extends IClusters.IServerMetadata> {
 
+    // 服务器
     private T server;
 
+    // 权重
     private double weight;
 
+    // 当前权重
     private double currentWeight;
 
     public WeightedServer(T server, double weight) {
         this.server = server;
         this.weight = weight;
-        this.currentWeight = 0; // Initialize currentWeight is 0
+        this.currentWeight = 0; // Initialize currentWeight is 0 初始化当前权重为0
     }
 
 }

@@ -27,14 +27,25 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * 主服务器元数据
+ */
 @Data
 @ToString(callSuper = true)
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class MasterServerMetadata extends BaseServerMetadata implements Comparable<MasterServerMetadata> {
 
+    /**
+     * 从心跳数据包解析生成主服务器元数据对象
+     *
+     * @param masterHeartBeat 主服务器心跳数据包，包含进程ID、启动时间等元数据信息
+     * @return 构建完成的主服务器元数据对象，包含地址拼接、资源使用率等派生字段
+     * @throws NullPointerException 当输入参数为null时抛出异常
+     */
     public static MasterServerMetadata parseFromHeartBeat(final MasterHeartBeat masterHeartBeat) {
         checkNotNull(masterHeartBeat);
+        // 通过Builder模式构造对象，转换心跳数据到元数据结构
         return MasterServerMetadata.builder()
                 .processId(masterHeartBeat.getProcessId())
                 .serverStartupTime(masterHeartBeat.getStartupTime())
@@ -45,7 +56,13 @@ public class MasterServerMetadata extends BaseServerMetadata implements Comparab
                 .build();
     }
 
-    // Use the master address to sort the master server
+    /**
+     * 实现主服务器元数据排序比较逻辑
+     *
+     * @param o 被比较的主服务器元数据对象
+     * @return 正数表示当前对象地址更大，0表示地址相同，负数表示更小
+     *         按地址字符串的自然字典序进行排序
+     */
     @Override
     public int compareTo(final MasterServerMetadata o) {
         return this.getAddress().compareTo(o.getAddress());
