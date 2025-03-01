@@ -17,11 +17,11 @@
 
 package org.apache.dolphinscheduler.server.master.cluster.loadbalancer;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.dolphinscheduler.server.master.cluster.IClusters;
 import org.apache.dolphinscheduler.server.master.cluster.WorkerClusters;
 import org.apache.dolphinscheduler.server.master.cluster.WorkerServerMetadata;
-
-import org.apache.commons.collections4.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -31,9 +31,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
+ * 动态加权平滑轮询负载均衡器实现
+ *
+ * 核心创新点：
+ * 1. 实时权重计算：基于服务器实时负载指标（CPU/内存/线程池使用率）动态调整权重
+ * 2. 多维度权重配置：支持通过配置策略调整各指标的权重占比
+ * 3. 热更新机制：通过集群监听实现节点状态实时同步
+ *
  * This load balancer is used to select a worker from {@link WorkerClusters} by dynamic weights.
  * </p>
  * The dynamic weights are calculated by the worker's load. e.g. cpu/memory/disk usage/thread usage etc.
@@ -43,28 +48,28 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DynamicWeightedRoundRobinWorkerLoadBalancer implements IWorkerLoadBalancer {
 
-    // 工作集群
+    // 集群管理组件（含节点健康状态）
     private final WorkerClusters workerClusters;
 
-    // 轮询索引
+    // 全局轮询索引（所有workerGroup共享）
     private final AtomicInteger robinIndex = new AtomicInteger(0);
 
-    // 权重服务器
+    // 权重元数据存储（地址->权重对象）
     private Map<String, WeightedServer<WorkerServerMetadata>> weightedServerMap = new ConcurrentHashMap<>();
 
     /**
-     * 动态加权循环工作负载均衡器
-     *
-     * @param workerClusters                工作集群
-     * @param dynamicWeightConfigProperties 动态权重配置属性
+     * 构造函数初始化动态权重监听
+     * @param workerClusters 集群管理组件
+     * @param dynamicWeightConfigProperties 权重计算策略配置
      */
     public DynamicWeightedRoundRobinWorkerLoadBalancer(WorkerClusters workerClusters,
                                                        WorkerLoadBalancerConfigurationProperties.DynamicWeightConfigProperties dynamicWeightConfigProperties) {
         this.workerClusters = workerClusters;
+        // 注册三态监听器
         this.workerClusters.registerListener(new IClusters.IClustersChangeListener<WorkerServerMetadata>() {
 
             /**
-             * 服务器添加
+             * 服务器添加 节点上线时初始化权重
              * @param server 服务器
              */
             @Override
@@ -73,7 +78,7 @@ public class DynamicWeightedRoundRobinWorkerLoadBalancer implements IWorkerLoadB
             }
 
             /**
-             * 服务器删除
+             * 服务器删除  节点下线时移除权重记录
              * @param server 服务器
              */
             @Override
@@ -82,7 +87,7 @@ public class DynamicWeightedRoundRobinWorkerLoadBalancer implements IWorkerLoadB
             }
 
             /**
-             * 服务器更新
+             * 服务器更新 节点状态更新时重新计算权重
              * @param server 服务器
              */
             @Override
@@ -91,7 +96,7 @@ public class DynamicWeightedRoundRobinWorkerLoadBalancer implements IWorkerLoadB
             }
 
             /**
-             * 计算权重
+             * 计算权重  权重计算公式（示例：100 - (CPU权重*使用率 + 内存权重*使用率 + 线程池权重*使用率)/3）
              * @param server 服务器
              * @return double
              */
@@ -118,6 +123,7 @@ public class DynamicWeightedRoundRobinWorkerLoadBalancer implements IWorkerLoadB
      */
     @Override
     public Optional<String> select(@NotNull String workerGroup) {
+        // 1. 获取有效节点列表（带最新权重）
         List<WeightedServer<WorkerServerMetadata>> weightedServers =
                 workerClusters.getNormalWorkerServerAddressByGroup(workerGroup)
                         .stream()

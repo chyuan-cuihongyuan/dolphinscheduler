@@ -23,13 +23,13 @@ import lombok.Data;
 public class ResourceInfo {
 
     /**
-     * res the name of the resource that was uploaded
+     * res上传的资源的名称
      */
     @Deprecated
     private Integer id;
 
     /**
-     * ResourceAbsolutePathInStorage
+     * 存储中的资源绝对路径
      */
     private String resourceName;
 

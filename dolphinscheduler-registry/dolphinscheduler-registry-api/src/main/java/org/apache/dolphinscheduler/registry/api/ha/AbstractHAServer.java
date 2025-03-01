@@ -17,8 +17,8 @@
 
 package org.apache.dolphinscheduler.registry.api.ha;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dolphinscheduler.common.thread.ThreadUtils;
 import org.apache.dolphinscheduler.registry.api.Event;
 import org.apache.dolphinscheduler.registry.api.Registry;
@@ -26,27 +26,65 @@ import org.apache.dolphinscheduler.registry.api.SubscribeListener;
 
 import java.util.List;
 
-import lombok.extern.slf4j.Slf4j;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.Lists;
-
+/**
+ * 高可用服务抽象基类（状态模式 + 观察者模式）
+ *
+ * <p>核心职责：
+ * <ol>
+ *   <li><b>Leader选举管理</b>：通过分布式锁实现选主</li>
+ *   <li><b>状态机维护</b>：管理ACTIVE/STAND_BY状态转换</li>
+ *   <li><b>故障自动恢复</b>：内置重试机制应对网络抖动</li>
+ * </ol>
+ *
+ * <p>关键配置参数：
+ * <ul>
+ *   <li>selectorPath：选主路径（Zookeeper格式）</li>
+ *   <li>serverIdentify：服务唯一标识（格式：IP:PORT）</li>
+ *   <li>DEFAULT_RETRY_INTERVAL：选举重试间隔（5秒）</li>
+ * </ul>
+ */
 @Slf4j
 public abstract class AbstractHAServer implements HAServer {
 
+    /**
+     * 注册中心客户端（支持Zookeeper/Nacos等）
+     */
     private final Registry registry;
 
+    /**
+     * 选主路径（持久节点路径）
+     * <p>示例：/dolphinscheduler/nodes/master
+     */
     private final String selectorPath;
 
+    /**
+     * 服务实例唯一标识（推荐格式：IP:PORT）
+     */
     private final String serverIdentify;
 
+    /**
+     * 当前服务状态（原子状态）
+     */
     private ServerStatus serverStatus;
 
+    /**
+     * 状态变更监听器列表（支持扩展）
+     */
     private final List<ServerStatusChangeListener> serverStatusChangeListeners;
 
     private static final long DEFAULT_RETRY_INTERVAL = 5_000;
 
     private static final int DEFAULT_MAX_RETRY_TIMES = 20;
 
+    /**
+     * 构造器（模板方法模式）
+     *
+     * @param registry       注册中心实例
+     * @param selectorPath   选主路径（必须存在）
+     * @param serverIdentify 服务实例标识（非空）
+     */
     public AbstractHAServer(final Registry registry, final String selectorPath, final String serverIdentify) {
         this.registry = registry;
         this.selectorPath = checkNotNull(selectorPath);
@@ -55,6 +93,13 @@ public abstract class AbstractHAServer implements HAServer {
         this.serverStatusChangeListeners = Lists.newArrayList(new DefaultServerStatusChangeListener());
     }
 
+    /**
+     * 启动服务（自动触发选主）
+     * <p>执行流程：
+     * 1. 订阅选主路径变更事件
+     * 2. 参与首次选主
+     * 3. 根据选举结果更新状态
+     */
     @Override
     public void start() {
         registry.subscribe(selectorPath, new SubscribeListener() {
@@ -90,11 +135,20 @@ public abstract class AbstractHAServer implements HAServer {
         return ServerStatus.ACTIVE.equals(getServerStatus());
     }
 
+    /**
+     * 参与选举（带重试机制）
+     * <p>选举逻辑：
+     * 1. 获取分布式锁（防止脑裂）
+     * 2. 检查选主路径是否存在
+     * - 不存在：创建节点并成为Leader
+     * - 存在：验证当前节点是否为Leader
+     * 3. 释放锁
+     */
     @Override
     public boolean participateElection() {
         final String electionLock = selectorPath + "-lock";
-        // If meet exception during participate election, will retry.
-        // This can avoid the situation that the server is not elected as leader due to network jitter.
+        //如果在参与选举期间遇到异常，将重试。
+        //这可以避免服务器因网络抖动而未被选为领导者的情况。
         for (int i = 0; i < DEFAULT_MAX_RETRY_TIMES; i++) {
             try {
                 try {
@@ -136,7 +190,7 @@ public abstract class AbstractHAServer implements HAServer {
             try {
                 serverStatusChangeListeners.forEach(listener -> listener.change(originStatus, serverStatus));
             } catch (Exception ex) {
-                log.error("Trigger ServerStatusChangeListener from {} -> {} error", originStatus, targetStatus, ex);
+                log.error("触发服务器StatusChangeListener从 {} -> {} error", originStatus, targetStatus, ex);
             }
         }
     }

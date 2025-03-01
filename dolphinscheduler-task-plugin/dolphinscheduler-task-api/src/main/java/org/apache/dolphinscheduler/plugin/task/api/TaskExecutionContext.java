@@ -17,6 +17,11 @@
 
 package org.apache.dolphinscheduler.plugin.task.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.dolphinscheduler.plugin.task.api.enums.TaskTimeoutStrategy;
 import org.apache.dolphinscheduler.plugin.task.api.model.Property;
 import org.apache.dolphinscheduler.plugin.task.api.parameters.resource.ResourceParametersHelper;
@@ -25,15 +30,22 @@ import org.apache.dolphinscheduler.plugin.task.api.resource.ResourceContext;
 import java.io.Serializable;
 import java.util.Map;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 /**
- * to master/worker task transport
+ * 任务执行上下文（数据传输对象）
+ *
+ * <p>核心职责：
+ * <ol>
+ *   <li><b>环境信息聚合</b>：封装任务运行所需的全量上下文数据</li>
+ *   <li><b>跨节点传输</b>：序列化后在工作流引擎与Worker节点间传递</li>
+ *   <li><b>资源桥接</b>：连接任务参数与运行时资源（数据源/文件等）</li>
+ * </ol>
+ *
+ * <p>设计要点：
+ * <ul>
+ *   <li>Builder模式构造复杂对象</li>
+ *   <li>JSON序列化支持网络传输</li>
+ *   <li>线程安全（字段均为基本类型/不可变对象）</li>
+ * </ul>
  */
 @Data
 @Builder

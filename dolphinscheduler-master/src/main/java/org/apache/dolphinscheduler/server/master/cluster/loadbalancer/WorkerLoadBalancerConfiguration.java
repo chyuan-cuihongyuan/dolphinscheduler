@@ -19,7 +19,6 @@ package org.apache.dolphinscheduler.server.master.cluster.loadbalancer;
 
 import org.apache.dolphinscheduler.server.master.cluster.ClusterManager;
 import org.apache.dolphinscheduler.server.master.config.MasterConfig;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,12 +29,21 @@ import org.springframework.context.annotation.Configuration;
 public class WorkerLoadBalancerConfiguration {
 
     /**
-     * 创建工作负载均衡器实例
+     * 创建工作负载均衡器实例（工厂方法模式）
      *
-     * @param masterConfig 主节点配置，用于获取负载均衡器配置属性
+     * <p>通过本方法实现：
+     * 1. 工厂方法模式：根据配置类型动态创建具体负载均衡器实例
+     * 2. 策略模式：不同负载均衡器实现统一接口，支持运行时策略切换
+     *
+     * @param masterConfig   主节点配置，用于获取负载均衡器配置属性
      * @param clusterManager 集群管理器，用于获取可用的工作节点集群信息
      * @return 根据配置类型创建的负载均衡器实例，实现IWorkerLoadBalancer接口
      * @throws IllegalArgumentException 当配置了不支持的负载均衡器类型时抛出异常
+     * @see IWorkerLoadBalancer  策略模式接口
+     * @see RandomWorkerLoadBalancer  具体策略实现
+     * @see RoundRobinWorkerLoadBalancer  具体策略实现
+     * @see FixedWeightedRoundRobinWorkerLoadBalancer  具体策略实现
+     * @see DynamicWeightedRoundRobinWorkerLoadBalancer  具体策略实现
      */
     @Bean
     public IWorkerLoadBalancer randomWorkerLoadBalancer(MasterConfig masterConfig, ClusterManager clusterManager) {

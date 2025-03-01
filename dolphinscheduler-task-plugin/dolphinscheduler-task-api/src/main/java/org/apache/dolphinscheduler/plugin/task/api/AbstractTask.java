@@ -17,6 +17,9 @@
 
 package org.apache.dolphinscheduler.plugin.task.api;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.dolphinscheduler.plugin.task.api.enums.TaskExecutionStatus;
 import org.apache.dolphinscheduler.plugin.task.api.model.Property;
 import org.apache.dolphinscheduler.plugin.task.api.model.TaskAlertInfo;
@@ -27,59 +30,108 @@ import java.util.StringJoiner;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-
+/**
+ * 任务抽象基类（模板方法模式）
+ *
+ * <p>核心职责：
+ * <ol>
+ *   <li><b>执行流程控制</b>：定义任务处理的标准流程</li>
+ *   <li><b>状态跟踪</b>：管理任务执行状态码和结果</li>
+ *   <li><b>资源管理</b>：跟踪进程ID和资源管理器ID（如YARN应用ID）</li>
+ * </ol>
+ *
+ * <p>生命周期方法：
+ * <ul>
+ *   <li>init()：初始化任务（可重写）</li>
+ *   <li>handle()：执行核心逻辑（必须实现）</li>
+ *   <li>cancel()：终止任务（必须实现）</li>
+ * </ul>
+ */
 @Slf4j
 public abstract class AbstractTask {
 
+    /**
+     * 任务输出参数（工作流上下文传递）
+     * <p>格式：Map<参数名, 参数值>
+     */
     @Getter
     @Setter
     protected Map<String, String> taskOutputParams;
 
     /**
-     * taskExecutionContext
-     **/
+     * 任务执行上下文（包含环境信息）
+     * <p>包含：
+     * <ul>
+     *   <li>任务实例ID</li>
+     *   <li>工作流实例信息</li>
+     *   <li>资源文件列表</li>
+     * </ul>
+     */
     protected TaskExecutionContext taskRequest;
 
     /**
-     * SHELL process pid
+     * 本地进程ID（仅本地执行模式有效）
      */
     protected int processId;
 
     /**
-     * other resource manager appId , for example : YARN etc
+     * 资源管理器应用ID（如YARN ApplicationID）
      */
     protected String appIds;
 
     /**
-     * exit code
+     * 任务退出状态码（原子可见性）
+     * <p>取值规范：
+     * <ul>
+     *   <li>0：成功</li>
+     *   <li>-1：默认初始值</li>
+     *   <li>其他：失败具体原因</li>
+     * </ul>
      */
     protected volatile int exitStatusCode = -1;
 
+    /**
+     * 是否需要发送告警
+     */
     protected boolean needAlert = false;
 
+    /**
+     * 任务告警信息
+     */
     protected TaskAlertInfo taskAlertInfo;
 
     /**
-     * constructor
+     * 构造函数，初始化任务执行上下文
      *
-     * @param taskExecutionContext taskExecutionContext
+     * @param taskExecutionContext 任务执行上下文对象，包含任务实例ID、工作流实例信息、
+     *                             资源文件列表等环境信息
      */
     protected AbstractTask(TaskExecutionContext taskExecutionContext) {
         this.taskRequest = taskExecutionContext;
     }
 
     /**
-     * init task
+     * 初始化任务方法（空实现）
+     * <p>子类可根据需要重写此方法，用于执行自定义初始化逻辑
      */
     public void init() {
     }
 
-    // todo: return TaskResult rather than store the result in Task
+    /**
+     * 执行结果处理（模板方法）
+     * @param taskCallBack 回调接口，用于：
+     * <ul>
+     *   <li>上报任务状态</li>
+     *   <li>传递输出参数</li>
+     * </ul>
+     */
     public abstract void handle(TaskCallBack taskCallBack) throws TaskException;
 
+    /**
+     * 终止任务抽象方法
+     *
+     * @throws TaskException 当任务终止操作执行失败时抛出
+     */
     public abstract void cancel() throws TaskException;
 
     /**
@@ -90,6 +142,7 @@ public abstract class AbstractTask {
     public int getExitStatusCode() {
         return exitStatusCode;
     }
+
 
     public void setExitStatusCode(int exitStatusCode) {
         this.exitStatusCode = exitStatusCode;
@@ -135,9 +188,13 @@ public abstract class AbstractTask {
     public abstract AbstractParameters getParameters();
 
     /**
-     * get exit status according to exitCode
-     *
-     * @return exit status
+     * 获取任务退出状态（状态模式实现）
+     * @return 任务执行最终状态：
+     * <ul>
+     *   <li>SUCCESS：exitStatusCode == 0</li>
+     *   <li>KILL：主动终止</li>
+     *   <li>FAILURE：其他非零状态码</li>
+     * </ul>
      */
     public TaskExecutionStatus getExitStatus() {
         if (exitStatusCode == TaskConstants.EXIT_CODE_SUCCESS) {
@@ -150,9 +207,13 @@ public abstract class AbstractTask {
     }
 
     /**
-     * log handle
-     *
-     * @param logs log list
+     * 日志聚合处理（观察者模式）
+     * @param logs 日志队列，来源包括：
+     * <ul>
+     *   <li>标准输出</li>
+     *   <li>错误输出</li>
+     *   <li>自定义日志</li>
+     * </ul>
      */
     public void logHandle(LinkedBlockingQueue<String> logs) {
 
@@ -164,11 +225,15 @@ public abstract class AbstractTask {
     }
 
     /**
-     * regular expressions match the contents between two specified strings
+     * SQL参数替换（策略模式）
+     * @param content SQL模板内容（含${param}占位符）
+     * @param sqlParamsMap 有序参数映射（index→Property）
+     * @param paramsPropsMap 原始参数池（name→Property）
      *
-     * @param content        content
-     * @param sqlParamsMap   sql params map
-     * @param paramsPropsMap params props map
+     * <p>替换逻辑：
+     * 1. 使用正则匹配占位符
+     * 2. 从paramsPropsMap获取实际值
+     * 3. 按出现顺序存入sqlParamsMap
      */
     public void setSqlParamsMap(String content, Map<Integer, Property> sqlParamsMap,
                                 Map<String, Property> paramsPropsMap, int taskInstanceId) {
@@ -189,14 +254,14 @@ public abstract class AbstractTask {
 
             if (prop == null) {
                 log.error(
-                        "setSqlParamsMap: No Property with paramName: {} is found in paramsPropsMap of task instance"
-                                + " with id: {}. So couldn't put Property in sqlParamsMap.",
+                        "setSqlParamsMap:没有带paramName的属性: {} 在任务实例的paramsPropsMap中找到"
+                                + " 带有id: {}. 因此，无法将属性放入sqlParamsMap中.",
                         paramName, taskInstanceId);
             } else {
                 sqlParamsMap.put(index, prop);
                 index++;
                 log.info(
-                        "setSqlParamsMap: Property with paramName: {} put in sqlParamsMap of content {} successfully.",
+                        "setSqlParamsMap:带有paramName的属性: {}放入sqlParamsMap内容 {} 成功地.",
                         paramName, content);
             }
 
