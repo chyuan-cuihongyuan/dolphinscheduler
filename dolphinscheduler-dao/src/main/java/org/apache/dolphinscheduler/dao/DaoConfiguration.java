@@ -17,13 +17,14 @@
 
 package org.apache.dolphinscheduler.dao;
 
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.apache.dolphinscheduler.dao.plugin.api.DaoPluginConfiguration;
 import org.apache.dolphinscheduler.dao.plugin.api.dialect.DatabaseDialect;
 import org.apache.dolphinscheduler.dao.plugin.api.monitor.DatabaseMonitor;
-
 import org.apache.ibatis.mapping.DatabaseIdProvider;
 import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
-
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -32,10 +33,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
-import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-
 @Configuration
 @ComponentScan("org.apache.dolphinscheduler.dao")
 @EnableAutoConfiguration
@@ -43,13 +40,13 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 public class DaoConfiguration {
 
     /**
-     * Inject this field to make sure the database is initialized, this can solve the table not found issue #8432.
+     * 注入此字段以确保数据库已初始化，这可以解决找不到表的问题 #8432.
      */
     @Autowired(required = false)
     public DataSourceScriptDatabaseInitializer dataSourceScriptDatabaseInitializer;
 
     /**
-     * Inject this field to make sure the DaoPluginConfiguration is initialized before SpringConnectionFactory.
+     * 注入此字段以确保在SpringConnectionFactory之前初始化DaoPluginConfiguration。
      */
     @Autowired
     public DaoPluginConfiguration daoPluginConfiguration;

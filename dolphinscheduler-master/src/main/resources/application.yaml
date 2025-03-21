@@ -72,14 +72,14 @@ registry:
   type: zookeeper
   zookeeper:
     namespace: dolphinscheduler
-    connect-string: localhost:2181
+    connect-string: 125.88.213.38:2181
     retry-policy:
       base-sleep-time: 1s
       max-sleep: 3s
       max-retries: 5
     session-timeout: 60s
-    connection-timeout: 15s
-    block-until-connected: 15s
+    connection-timeout: 60s
+    block-until-connected: 60s
     digest: ~
 
 master:
@@ -151,9 +151,9 @@ spring:
       on-profile: mysql
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/dolphinscheduler
+    url: jdbc:mysql://125.88.213.38:3306/dolphinscheduler?useUnicode=true&characterEncoding=UTF-8
     username: root
-    password: root
+    password: chy010731
   quartz:
     properties:
       org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate

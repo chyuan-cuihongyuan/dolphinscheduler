@@ -21,13 +21,12 @@ import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.plugin.task.api.TaskExecutionContext;
 import org.apache.dolphinscheduler.plugin.task.api.model.Property;
 import org.apache.dolphinscheduler.plugin.task.api.parameters.AbstractParameters;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class OpenmldbTaskTest {
 
@@ -65,7 +64,7 @@ public class OpenmldbTaskTest {
         TaskExecutionContext taskExecutionContext = Mockito.mock(TaskExecutionContext.class);
         OpenmldbParameters openmldbParameters = new OpenmldbParameters();
         openmldbParameters.setExecuteMode("offline");
-        openmldbParameters.setZk("localhost:2181");
+        openmldbParameters.setZk("125.88.213.38:2181");
         openmldbParameters.setZkPath("dolphinscheduler");
         String rawSQLScript = "select * from users\r\n"
                 + "-- some comment\n"
@@ -82,7 +81,7 @@ public class OpenmldbTaskTest {
         String result1 = openmldbTask.buildPythonScriptContent();
         Assertions.assertEquals("import openmldb\n"
                 + "import sqlalchemy as db\n"
-                + "engine = db.create_engine('openmldb:///?zk=localhost:2181&zkPath=dolphinscheduler')\n"
+                + "engine = db.create_engine('openmldb:///?zk=125.88.213.38:2181&zkPath=dolphinscheduler')\n"
                 + "con = engine.connect()\n"
                 + "con.execute(\"set @@execute_mode='offline';\")\n"
                 + "con.execute(\"set @@sync_job=true\")\n"
